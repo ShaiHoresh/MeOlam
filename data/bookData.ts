@@ -17,7 +17,7 @@ export interface BookData {
 export const bookData: BookData = {
   title: "ספר החכמה והמוסר",
   subtitle: "מבחר מאמרים ודרשות",
-  author: "המחבר",
+  author: "הרב יוסף כהן",
   chapters: [
     {
       id: "chapter-1",

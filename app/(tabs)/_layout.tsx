@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Book, Search, Bookmark } from 'lucide-react-native';
+import { Book, Search, Bookmark, Info } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
@@ -45,6 +45,15 @@ export default function TabLayout() {
           title: 'סימנייה',
           tabBarIcon: ({ size, color }) => (
             <Bookmark size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="details"
+        options={{
+          title: 'פרטי הספר',
+          tabBarIcon: ({ size, color }) => (
+            <Info size={size} color={color} />
           ),
         }}
       />
