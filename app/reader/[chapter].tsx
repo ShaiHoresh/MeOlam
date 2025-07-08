@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, I18nManage
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ArrowRight, Bookmark, BookmarkCheck } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { bookData } from '@/data/bookData';
+import { bookData, Chapter, BlockContent } from '@/data/bookData';
 
 // Enable RTL layout
 I18nManager.allowRTL(true);
@@ -19,14 +19,14 @@ interface BookmarkData {
 
 export default function ReaderScreen() {
   const { chapter: chapterId, searchQuery, position } = useLocalSearchParams();
-  const [currentChapter, setCurrentChapter] = useState<any>(null);
+  const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [scrollPosition, setScrollPosition] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
     const chapter = bookData.chapters.find(ch => ch.id === chapterId);
-    setCurrentChapter(chapter);
+    setCurrentChapter(chapter || null);
     checkBookmarkStatus();
   }, [chapterId]);
 
@@ -45,11 +45,15 @@ export default function ReaderScreen() {
   const saveBookmark = async () => {
     if (!currentChapter) return;
 
+    // Get first paragraph from first block for bookmark preview
+    const firstBlock = currentChapter.content[0];
+    const previewText = firstBlock?.paragraphs[0]?.substring(0, 100) || '';
+
     const bookmarkData: BookmarkData = {
       chapterId: currentChapter.id,
       chapterTitle: currentChapter.title,
       position: scrollPosition,
-      text: currentChapter.content.substring(scrollPosition, scrollPosition + 100),
+      text: previewText,
       timestamp: Date.now(),
     };
 
@@ -90,12 +94,12 @@ export default function ReaderScreen() {
 
   const highlightSearchResults = (text: string, query: string) => {
     if (!query) {
-      return <Text style={styles.contentTextStyle}>{text}</Text>;
+      return <Text style={styles.paragraphText}>{text}</Text>;
     }
     
     const parts = text.split(new RegExp(`(${query})`, 'gi'));
     return (
-      <Text style={styles.contentTextStyle}>
+      <Text style={styles.paragraphText}>
         {parts.map((part, index) => {
           if (part.toLowerCase() === query.toLowerCase()) {
             return (
@@ -110,10 +114,36 @@ export default function ReaderScreen() {
     );
   };
 
+  const renderBlock = (block: BlockContent, blockIndex: number) => {
+    const query = searchQuery ? decodeURIComponent(searchQuery as string) : '';
+    
+    return (
+      <View key={blockIndex} style={styles.blockContainer}>
+        {/* Render subtitle if it exists */}
+        {block.subtitle && (
+          <Text style={styles.blockSubtitle}>
+            {query ? highlightSearchResults(block.subtitle, query) : block.subtitle}
+          </Text>
+        )}
+        
+        {/* Render paragraphs */}
+        {block.paragraphs.map((paragraph, paragraphIndex) => (
+          <View key={paragraphIndex} style={styles.paragraphContainer}>
+            {query ? highlightSearchResults(paragraph, query) : (
+              <Text style={styles.paragraphText}>{paragraph}</Text>
+            )}
+          </View>
+        ))}
+      </View>
+    );
+  };
+
   if (!currentChapter) {
     return (
       <View style={styles.container}>
-        <Text>פרק לא נמצא</Text>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>פרק לא נמצא</Text>
+        </View>
       </View>
     );
   }
@@ -131,7 +161,6 @@ export default function ReaderScreen() {
 
         <View style={styles.titleContainer}>
           <Text style={styles.chapterTitle}>{currentChapter.title}</Text>
-          <Text style={styles.chapterSubtitle}>{currentChapter.subtitle}</Text>
         </View>
 
         <TouchableOpacity
@@ -158,12 +187,7 @@ export default function ReaderScreen() {
         scrollEventThrottle={100}
       >
         <View style={styles.textContainer}>
-          <View style={styles.contentText}>
-            {searchQuery 
-              ? highlightSearchResults(currentChapter.content, decodeURIComponent(searchQuery as string))
-              : <Text style={styles.contentTextStyle}>{currentChapter.content}</Text>
-            }
-          </View>
+          {currentChapter.content.map((block, index) => renderBlock(block, index))}
         </View>
 
         <View style={styles.footer}>
@@ -214,13 +238,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     writingDirection: 'rtl',
   },
-  chapterSubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-    marginTop: 2,
-    writingDirection: 'rtl',
-  },
   bookmarkButton: {
     width: 40,
     height: 40,
@@ -243,15 +260,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     paddingVertical: 30,
   },
-  contentText: {
-    fontSize: 18,
-    lineHeight: 32,
+  blockContainer: {
+    marginBottom: 25,
+  },
+  blockSubtitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
     color: '#1F2937',
     textAlign: 'right',
     writingDirection: 'rtl',
-    fontWeight: '400',
+    marginBottom: 15,
+    lineHeight: 28,
   },
-  contentTextStyle: {
+  paragraphContainer: {
+    marginBottom: 15,
+  },
+  paragraphText: {
     fontSize: 18,
     lineHeight: 32,
     color: '#1F2937',
@@ -278,5 +302,16 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#EF4444',
+    textAlign: 'center',
   },
 });

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, I18nManager } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Search as SearchIcon, X } from 'lucide-react-native';
-import { bookData } from '@/data/bookData';
+import { bookData, BlockContent } from '@/data/bookData';
 
 // Enable RTL layout
 I18nManager.allowRTL(true);
@@ -11,8 +11,10 @@ I18nManager.forceRTL(true);
 interface SearchResult {
   chapterId: string;
   chapterTitle: string;
+  blockSubtitle: string;
   text: string;
   position: number;
+  type: 'paragraph' | 'subtitle';
 }
 
 export default function SearchScreen() {
@@ -29,26 +31,42 @@ export default function SearchScreen() {
 
     setIsSearching(true);
     const results: SearchResult[] = [];
+    const searchTerm = query.toLowerCase();
 
     bookData.chapters.forEach(chapter => {
-      const searchTerm = query.toLowerCase();
-      const content = chapter.content.toLowerCase();
-      let position = 0;
+      chapter.content.forEach((block: BlockContent, blockIndex) => {
+        // Search in subtitle
+        if (block.subtitle && block.subtitle.toLowerCase().includes(searchTerm)) {
+          results.push({
+            chapterId: chapter.id,
+            chapterTitle: chapter.title,
+            blockSubtitle: block.subtitle,
+            text: block.subtitle,
+            position: blockIndex,
+            type: 'subtitle',
+          });
+        }
 
-      while ((position = content.indexOf(searchTerm, position)) !== -1) {
-        const start = Math.max(0, position - 50);
-        const end = Math.min(chapter.content.length, position + searchTerm.length + 50);
-        const context = chapter.content.substring(start, end);
+        // Search in paragraphs
+        block.paragraphs.forEach((paragraph, paragraphIndex) => {
+          if (paragraph.toLowerCase().includes(searchTerm)) {
+            // Create context around the found term
+            const termIndex = paragraph.toLowerCase().indexOf(searchTerm);
+            const start = Math.max(0, termIndex - 50);
+            const end = Math.min(paragraph.length, termIndex + searchTerm.length + 50);
+            const context = paragraph.substring(start, end);
 
-        results.push({
-          chapterId: chapter.id,
-          chapterTitle: chapter.title,
-          text: context,
-          position: position,
+            results.push({
+              chapterId: chapter.id,
+              chapterTitle: chapter.title,
+              blockSubtitle: block.subtitle,
+              text: context,
+              position: blockIndex * 1000 + paragraphIndex, // Unique position identifier
+              type: 'paragraph',
+            });
+          }
         });
-
-        position += searchTerm.length;
-      }
+      });
     });
 
     setSearchResults(results);
@@ -84,6 +102,10 @@ export default function SearchScreen() {
   const clearSearch = () => {
     setSearchQuery('');
     setSearchResults([]);
+  };
+
+  const getResultTypeLabel = (type: 'paragraph' | 'subtitle') => {
+    return type === 'subtitle' ? 'כותרת משנה' : 'פסקה';
   };
 
   return (
@@ -137,15 +159,25 @@ export default function SearchScreen() {
 
         {searchResults.map((result, index) => (
           <TouchableOpacity
-            key={`${result.chapterId}-${index}`}
+            key={`${result.chapterId}-${result.position}-${index}`}
             style={styles.resultItem}
             onPress={() => handleResultPress(result)}
             activeOpacity={0.7}
           >
             <View style={styles.resultHeader}>
-              <Text style={styles.resultNumber}>{index + 1}</Text>
+              <View style={styles.resultMeta}>
+                <Text style={styles.resultNumber}>{index + 1}</Text>
+                <Text style={styles.resultType}>{getResultTypeLabel(result.type)}</Text>
+              </View>
               <Text style={styles.resultChapter}>{result.chapterTitle}</Text>
             </View>
+            
+            {result.blockSubtitle && result.type === 'paragraph' && (
+              <Text style={styles.resultBlockSubtitle}>
+                בקטע: {result.blockSubtitle}
+              </Text>
+            )}
+            
             <View style={styles.resultText}>
               {highlightText(result.text, searchQuery)}
             </View>
@@ -159,6 +191,12 @@ export default function SearchScreen() {
             <Text style={styles.emptyStateText}>
               הקלד מילה או ביטוי כדי לחפש בתוכן הספר
             </Text>
+            <View style={styles.searchTips}>
+              <Text style={styles.searchTipsTitle}>טיפים לחיפוש:</Text>
+              <Text style={styles.searchTip}>• חפש במילים בודדות או בביטויים</Text>
+              <Text style={styles.searchTip}>• החיפוש כולל כותרות משנה ופסקאות</Text>
+              <Text style={styles.searchTip}>• לחץ על תוצאה כדי לעבור למקום בספר</Text>
+            </View>
           </View>
         )}
         
@@ -249,7 +287,13 @@ const styles = StyleSheet.create({
   resultHeader: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 8,
+  },
+  resultMeta: {
+    flexDirection: 'row-reverse',
+    alignItems: 'center',
+    gap: 8,
   },
   resultNumber: {
     fontSize: 14,
@@ -259,7 +303,15 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    marginLeft: 10,
+  },
+  resultType: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6B7280',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
   resultChapter: {
     fontSize: 14,
@@ -268,6 +320,14 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: 'right',
     writingDirection: 'rtl',
+  },
+  resultBlockSubtitle: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    fontStyle: 'italic',
+    textAlign: 'right',
+    writingDirection: 'rtl',
+    marginBottom: 8,
   },
   resultText: {
     fontSize: 15,
@@ -300,6 +360,7 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     paddingVertical: 60,
+    paddingHorizontal: 20,
   },
   emptyStateTitle: {
     fontSize: 24,
@@ -314,6 +375,27 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'center',
     lineHeight: 24,
+    marginBottom: 30,
+  },
+  searchTips: {
+    backgroundColor: '#F0F9FF',
+    borderRadius: 12,
+    padding: 20,
+    width: '100%',
+  },
+  searchTipsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#0369A1',
+    marginBottom: 10,
+    textAlign: 'right',
+  },
+  searchTip: {
+    fontSize: 14,
+    color: '#0369A1',
+    marginBottom: 6,
+    textAlign: 'right',
+    writingDirection: 'rtl',
   },
   bottomPadding: {
     height: 40,

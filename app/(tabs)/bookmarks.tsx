@@ -78,6 +78,17 @@ export default function BookmarksScreen() {
     });
   };
 
+  const getChapterInfo = (chapterId: string) => {
+    const chapter = bookData.chapters.find(ch => ch.id === chapterId);
+    if (!chapter) return null;
+    
+    return {
+      title: chapter.title,
+      blockCount: chapter.content.length,
+      pageRange: `${chapter.startPage}-${chapter.endPage}`
+    };
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -100,7 +111,25 @@ export default function BookmarksScreen() {
               </View>
             </View>
 
+            {/* Chapter Details */}
+            {(() => {
+              const chapterInfo = getChapterInfo(bookmark.chapterId);
+              return chapterInfo ? (
+                <View style={styles.chapterDetails}>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>קטעים בפרק:</Text>
+                    <Text style={styles.detailValue}>{chapterInfo.blockCount}</Text>
+                  </View>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>עמודים:</Text>
+                    <Text style={styles.detailValue}>{chapterInfo.pageRange}</Text>
+                  </View>
+                </View>
+              ) : null;
+            })()}
+
             <View style={styles.bookmarkPreview}>
+              <Text style={styles.previewLabel}>תצוגה מקדימה:</Text>
               <Text style={styles.bookmarkText} numberOfLines={3}>
                 {bookmark.text}
               </Text>
@@ -134,6 +163,22 @@ export default function BookmarksScreen() {
             <Text style={styles.emptyText}>
               כשתתחיל לקרוא, תוכל לשמור סימנייה על ידי לחיצה על כפתור הסימנייה בעמוד הקריאה
             </Text>
+            
+            <View style={styles.instructionsContainer}>
+              <Text style={styles.instructionsTitle}>איך להשתמש בסימניות:</Text>
+              <Text style={styles.instructionText}>
+                1. פתח פרק כלשהו מתוכן העניינים
+              </Text>
+              <Text style={styles.instructionText}>
+                2. לחץ על סמל הסימנייה בחלק העליון של המסך
+              </Text>
+              <Text style={styles.instructionText}>
+                3. הסימנייה תישמר ותופיע כאן
+              </Text>
+              <Text style={styles.instructionText}>
+                4. לחץ "המשך קריאה" כדי לחזור למקום השמור
+              </Text>
+            </View>
           </View>
         )}
       </View>
@@ -216,11 +261,41 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     textAlign: 'right',
   },
+  chapterDetails: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  detailRow: {
+    flexDirection: 'row-reverse',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  detailLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'right',
+  },
+  detailValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    textAlign: 'right',
+  },
   bookmarkPreview: {
     backgroundColor: '#F9FAFB',
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
+  },
+  previewLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+    textAlign: 'right',
   },
   bookmarkText: {
     fontSize: 15,
@@ -278,5 +353,27 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: 20,
+    marginBottom: 30,
+  },
+  instructionsContainer: {
+    backgroundColor: '#F0F9FF',
+    borderRadius: 12,
+    padding: 20,
+    width: '100%',
+  },
+  instructionsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#0369A1',
+    marginBottom: 12,
+    textAlign: 'right',
+  },
+  instructionText: {
+    fontSize: 14,
+    color: '#0369A1',
+    marginBottom: 8,
+    textAlign: 'right',
+    writingDirection: 'rtl',
+    lineHeight: 20,
   },
 });
