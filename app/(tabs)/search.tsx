@@ -237,10 +237,13 @@ const styles = StyleSheet.create({
   searchInputContainer: {
     flexDirection: 'row-reverse',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
     paddingHorizontal: 15,
     paddingVertical: 12,
+    minHeight: 48,
   },
   searchIcon: {
     marginLeft: 10,
@@ -250,6 +253,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
     writingDirection: 'rtl',
+    minHeight: 24,
+    backgroundColor: 'transparent',
   },
   clearButton: {
     padding: 5,
