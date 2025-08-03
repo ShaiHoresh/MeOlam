@@ -170,7 +170,7 @@ export default function BookDetailsScreen() {
         {/* Copyright */}
         <View style={styles.copyrightSection}>
           <Text style={styles.copyrightText}>
-            © כל הזכויות שמורות למחבר • תשפ״ה
+            © כל הזכויות שמורות למחבר תשפ״ה
           </Text>
           <Text style={styles.copyrightSubtext}>
             אין להעתיק או להפיץ ללא רשות בכתב מהמחבר
