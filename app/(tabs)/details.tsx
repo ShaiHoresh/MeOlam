@@ -1,10 +1,13 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, I18nManager } from 'react-native';
 import { Book, User, Calendar, Mail, Globe, Star, Heart, Share2 } from 'lucide-react-native';
 import { bookData } from '@/data/bookData';
+import { Platform } from 'react-native';
 
 // Enable RTL layout
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
+if (Platform.OS !== 'web') {
+  I18nManager.allowRTL(true);
+  I18nManager.forceRTL(true);
+}
 
 export default function BookDetailsScreen() {
   const handleEmailPress = () => {

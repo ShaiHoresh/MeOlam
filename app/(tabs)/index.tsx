@@ -2,10 +2,13 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, I18nManager } fro
 import { useRouter } from 'expo-router';
 import { bookData } from '@/data/bookData';
 import { ChevronLeft, FileText } from 'lucide-react-native';
+import { Platform } from 'react-native';
 
 // Enable RTL layout
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
+if (Platform.OS !== 'web') {
+  I18nManager.allowRTL(true);
+  I18nManager.forceRTL(true);
+}
 
 export default function HomeScreen() {
   const router = useRouter();

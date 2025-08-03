@@ -4,10 +4,13 @@ import { useRouter } from 'expo-router';
 import { Bookmark, BookOpen, Trash2 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { bookData } from '@/data/bookData';
+import { Platform } from 'react-native';
 
 // Enable RTL layout
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
+if (Platform.OS !== 'web') {
+  I18nManager.allowRTL(true);
+  I18nManager.forceRTL(true);
+}
 
 interface BookmarkData {
   chapterId: string;

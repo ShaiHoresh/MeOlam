@@ -3,10 +3,13 @@ import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity, I18nMa
 import { useRouter } from 'expo-router';
 import { Search as SearchIcon, X } from 'lucide-react-native';
 import { bookData, BlockContent } from '@/data/bookData';
+import { Platform } from 'react-native';
 
 // Enable RTL layout
-I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
+if (Platform.OS !== 'web') {
+  I18nManager.allowRTL(true);
+  I18nManager.forceRTL(true);
+}
 
 interface SearchResult {
   chapterId: string;
